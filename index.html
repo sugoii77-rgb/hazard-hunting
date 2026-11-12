@@ -1,0 +1,386 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>하자드헌팅 테스트</title>
+
+<style>
+
+body{
+    font-family:Arial,sans-serif;
+    background:#f3f4f6;
+    margin:0;
+}
+
+header{
+    background:#dc2626;
+    color:white;
+    text-align:center;
+    padding:15px;
+}
+
+.container{
+    padding:15px;
+}
+
+.card{
+    background:white;
+    padding:15px;
+    border-radius:10px;
+    margin-bottom:15px;
+    box-shadow:0 2px 6px rgba(0,0,0,.1);
+}
+
+input,
+select,
+textarea{
+    width:100%;
+    padding:10px;
+    margin-top:5px;
+    margin-bottom:10px;
+    border:1px solid #ddd;
+    border-radius:5px;
+    box-sizing:border-box;
+}
+
+button{
+    width:100%;
+    padding:12px;
+    background:#dc2626;
+    border:none;
+    color:white;
+    font-size:16px;
+    border-radius:5px;
+}
+
+.preview{
+    width:100%;
+    margin-bottom:10px;
+    border-radius:8px;
+}
+
+.item{
+    background:white;
+    margin-bottom:15px;
+    border-radius:10px;
+    padding:15px;
+}
+
+.photos{
+    display:flex;
+    gap:10px;
+    flex-wrap:wrap;
+}
+
+.photos div{
+    flex:1;
+    min-width:150px;
+}
+
+.photos img{
+    width:100%;
+    border-radius:5px;
+}
+
+.badge{
+    color:white;
+    padding:5px 10px;
+    border-radius:5px;
+}
+
+.high{
+    background:red;
+}
+
+.medium{
+    background:orange;
+}
+
+.low{
+    background:green;
+}
+
+</style>
+</head>
+
+<body>
+
+<header>
+<h2>🚨 하자드헌팅 테스트</h2>
+</header>
+
+<div class="container">
+
+<div class="card">
+
+<h3>위험요소 등록</h3>
+
+<label>개선 전 사진</label>
+<input
+type="file"
+id="beforePhoto"
+accept="image/*"
+capture="environment">
+
+<img
+id="beforePreview"
+class="preview"
+style="display:none;">
+
+<label>개선 후 사진</label>
+<input
+type="file"
+id="afterPhoto"
+accept="image/*"
+capture="environment">
+
+<img
+id="afterPreview"
+class="preview"
+style="display:none;">
+
+<label>위험유형</label>
+<select id="type">
+<option>추락</option>
+<option>전도</option>
+<option>감전</option>
+<option>협착</option>
+<option>화재</option>
+<option>기타</option>
+</select>
+
+<label>위험도</label>
+<select id="risk">
+<option>상</option>
+<option>중</option>
+<option>하</option>
+</select>
+
+<label>위치</label>
+<input
+type="text"
+id="location"
+placeholder="예: A동 3층">
+
+<label>조치내용</label>
+<textarea
+id="action"
+rows="4"
+placeholder="조치내용 입력"></textarea>
+
+<button onclick="saveHazard()">
+등록하기
+</button>
+
+</div>
+
+<div class="card">
+
+<h3>등록내역</h3>
+
+<div id="list"></div>
+
+</div>
+
+</div>
+
+<script>
+
+let beforeImage = "";
+let afterImage = "";
+
+document.getElementById("beforePhoto")
+.addEventListener("change",function(e){
+
+const file = e.target.files[0];
+
+if(!file) return;
+
+const reader = new FileReader();
+
+reader.onload = function(ev){
+
+beforeImage = ev.target.result;
+
+const img =
+document.getElementById("beforePreview");
+
+img.src = beforeImage;
+img.style.display = "block";
+
+};
+
+reader.readAsDataURL(file);
+
+});
+
+document.getElementById("afterPhoto")
+.addEventListener("change",function(e){
+
+const file = e.target.files[0];
+
+if(!file) return;
+
+const reader = new FileReader();
+
+reader.onload = function(ev){
+
+afterImage = ev.target.result;
+
+const img =
+document.getElementById("afterPreview");
+
+img.src = afterImage;
+img.style.display = "block";
+
+};
+
+reader.readAsDataURL(file);
+
+});
+
+function saveHazard(){
+
+const item = {
+
+type:
+document.getElementById("type").value,
+
+risk:
+document.getElementById("risk").value,
+
+location:
+document.getElementById("location").value,
+
+action:
+document.getElementById("action").value,
+
+beforeImage:
+beforeImage,
+
+afterImage:
+afterImage,
+
+status:"조치완료",
+
+date:
+new Date().toLocaleString()
+
+};
+
+let data =
+JSON.parse(
+localStorage.getItem("hazards")
+) || [];
+
+data.unshift(item);
+
+localStorage.setItem(
+"hazards",
+JSON.stringify(data)
+);
+
+alert("✅ 테스트 등록 완료");
+
+document.getElementById("location").value="";
+document.getElementById("action").value="";
+
+beforeImage="";
+afterImage="";
+
+document.getElementById(
+"beforePreview"
+).style.display="none";
+
+document.getElementById(
+"afterPreview"
+).style.display="none";
+
+loadData();
+}
+
+function loadData(){
+
+const list =
+document.getElementById("list");
+
+list.innerHTML="";
+
+let data =
+JSON.parse(
+localStorage.getItem("hazards")
+) || [];
+
+data.forEach((item,index)=>{
+
+let badge='low';
+
+if(item.risk==='상')
+badge='high';
+
+if(item.risk==='중')
+badge='medium';
+
+list.innerHTML += `
+
+<div class="item">
+
+<h4>
+${item.type}
+<span class="badge ${badge}">
+${item.risk}
+</span>
+</h4>
+
+<p>
+📍 ${item.location}
+</p>
+
+<div class="photos">
+
+<div>
+<b>개선 전</b><br>
+${
+item.beforeImage
+?
+`<img src="${item.beforeImage}">`
+:
+'없음'
+}
+</div>
+
+<div>
+<b>개선 후</b><br>
+${
+item.afterImage
+?
+`<img src="${item.afterImage}">`
+:
+'없음'
+}
+</div>
+
+</div>
+
+<p>
+🛠 ${item.action}
+</p>
+
+<p>
+📅 ${item.date}
+</p>
+
+</div>
+
+`;
+});
+
+}
+
+loadData();
+
+</script>
+
+</body>
+</html>
